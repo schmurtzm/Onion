@@ -55,16 +55,15 @@ main() {
     echo 80     > $pwmdir/pwm0/duty_cycle
     echo 1  	> $pwmdir/pwm0/enable
 
+    # Start the battery monitor
+    cd $sysdir
+    ./bin/batmon 2>&1 > ./logs/batmon.log &
+
     if [ ! -d /mnt/SDCARD/.tmp_update/onionVersion ]; then
         fresh_install 1
         cleanup
         return
     fi
-
-    cd $sysdir
-
-    # Start the battery monitor
-    ./bin/batmon 2>&1 > ./logs/batmon.log &
 
     # Prompt for update or fresh install
     ./bin/prompt -r -m "Welcome to the Onion installer!\nPlease choose an action:" \
@@ -166,7 +165,7 @@ fresh_install() {
 
     if [ $install_ra -eq 1 ]; then
         install_core "(1 of 2) Installing Onion..."
-        free_memory_inbetween
+        # free_memory_inbetween
         install_retroarch "(2 of 2) Installing RetroArch..."
     else
         install_core "(1 of 1) Installing Onion..."
@@ -220,7 +219,7 @@ update_only() {
 
     if [ $install_ra -eq 1 ]; then
         install_core "(1 of 2) Updating Onion..."
-        free_memory_inbetween
+        # free_memory_inbetween
         install_retroarch "(2 of 2) Updating RetroArch..."
         restore_ra_config
     else
@@ -229,11 +228,16 @@ update_only() {
     fi
 
     install_configs 0
+    
     echo "Update complete!" >> /tmp/.update_msg
+    sleep 1
 
     touch $sysdir/.waitConfirm
     sync
+    
     echo "Press any key to turn off" >> /tmp/.update_msg
+    sleep 1
+
     touch $sysdir/.installed
 
     until [ ! -f $sysdir/.waitConfirm ]; do
@@ -414,7 +418,11 @@ debloat_apps() {
         StartGameSwitcher \
         Guest_Mode \
         SearchFilter \
-        ThemeSwitcher
+        ThemeSwitcher \
+        Clock \
+        240pSuite \
+        Gmu \
+        Commander_Italic
 }
 
 refresh_roms() {

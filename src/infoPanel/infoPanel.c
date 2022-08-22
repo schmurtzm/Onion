@@ -126,6 +126,7 @@ int main(int argc, char *argv[])
 
 	bool cache_used = false;
 	if (exists(image_path)) {
+		g_images_paths_count = 1;
 		drawImage(image_path, screen);
 	}
 	else if(exists(images_json_path))
@@ -161,10 +162,16 @@ int main(int argc, char *argv[])
 				bool navigating_forward = true;
 				switch(event.key.keysym.sym) {
 				case SW_BTN_A:
+				case SW_BTN_RIGHT:
 					navigating_forward = true;
 					break;
 				case SW_BTN_B:
+				case SW_BTN_LEFT:
 					navigating_forward = false;
+					break;
+				case SW_BTN_MENU:
+					quit = true;
+					continue;
 					break;
 				default:
 					navigation_pressed = false;

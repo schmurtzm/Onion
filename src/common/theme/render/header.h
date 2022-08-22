@@ -10,10 +10,10 @@ void theme_renderHeaderBackground(SDL_Surface *screen)
 {
     SDL_Rect header_size = {0, 0, 640, 60};
     SDL_BlitSurface(theme_background(), &header_size, screen, &header_size);
-	SDL_BlitSurface(resource_getSurface(BG_TITLE), &header_size, screen, &header_size);    
+	SDL_BlitSurface(resource_getSurface(BG_TITLE), &header_size, screen, &header_size);
 }
 
-theme_renderHeaderBattery(SDL_Surface *screen, int battery_percentage)
+void theme_renderHeaderBattery(SDL_Surface *screen, int battery_percentage)
 {
     SDL_Surface *battery = theme_batterySurface(battery_percentage);
     SDL_Rect battery_rect = {596 - battery->w / 2, 30 - battery->h / 2};
@@ -33,9 +33,14 @@ void theme_renderHeader(SDL_Surface* screen, const char *title_str, bool show_lo
 
     if (title_str) {
         SDL_Surface *title = TTF_RenderUTF8_Blended(resource_getFont(TITLE), title_str, theme()->title.color);
-        SDL_Rect title_rect = {320 - title->w / 2, 29 - title->h / 2};
-        SDL_BlitSurface(title, NULL, screen, &title_rect);
-        SDL_FreeSurface(title);
+        if (title) {
+            SDL_Rect title_rect = {320 - title->w / 2, 29 - title->h / 2};
+            SDL_Rect title_bg = {title_rect.x - 10, 0, title->w + 20, 60};
+            SDL_BlitSurface(theme_background(), &title_bg, screen, &title_bg);
+            SDL_BlitSurface(resource_getSurface(BG_TITLE), &title_bg, screen, &title_bg);
+            SDL_BlitSurface(title, NULL, screen, &title_rect);
+            SDL_FreeSurface(title);
+        }
     }
 }
 

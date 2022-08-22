@@ -109,7 +109,7 @@ int suspend(uint32_t mode)
                      (strcmp(comm,"(sh)")) && (!(flags & PF_KTHREAD)) ) {
                     if (mode) {
                         if ( (strcmp(comm,"(runtime.sh)")) && (strcmp(comm,"(updater)")) && (strcmp(comm,"(MainUI)"))
-                          && (strcmp(comm,"(tee)")) && (strncmp(comm,"(audioserver",12)) ) {
+                          && (strcmp(comm,"(tee)")) && (strncmp(comm,"(audioserver",12)) && (strcmp(comm,"(batmon)")) ) {
                             kill(pid, (mode == 1) ? SIGTERM : SIGKILL); ret++;
                         }
                     } else {
@@ -294,7 +294,6 @@ int main(void) {
     uint32_t button_flag = 0;
     uint32_t repeat_LR = 0;
     uint32_t repeat_power = 0;
-    uint32_t repeat_menu = 0;
     uint32_t val;
     bool b_BTN_Not_Menu_Pressed = false;
     bool b_BTN_Menu_Pressed = false;
@@ -302,11 +301,10 @@ int main(void) {
     bool comboKey_menu = false;
     bool comboKey_select = false;
 
-    int ticks = getTicks();
+    int ticks = getMilliseconds();
     int hibernate_start = ticks;
     int hibernate_time;
     int elapsed_sec = 0;
-    int wait_ms = 1000;
 
     bool delete_flag = false;
 
@@ -468,7 +466,7 @@ int main(void) {
                     break;
             }
 
-            hibernate_start = getTicks();
+            hibernate_start = getMilliseconds();
             elapsed_sec = (hibernate_start - ticks) / 1000;
             if (elapsed_sec < CHECK_SEC) continue;
         }
@@ -487,7 +485,7 @@ int main(void) {
         delete_flag = true;
 
         // Update ticks
-        ticks = getTicks();
+        ticks = getMilliseconds();
 
         // Check Hibernate
         if (battery_isCharging())

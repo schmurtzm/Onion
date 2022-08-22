@@ -11,8 +11,8 @@ void theme_renderStandardHint(SDL_Surface *screen, const char *btn_a_str, const 
     char label_a_str[STR_MAX] = " ", label_b_str[STR_MAX] = " ";
 
     if (!theme()->hideLabels.hints) {
-        strncpy(label_a_str, btn_a_str, STR_MAX - 1);
-        strncpy(label_b_str, btn_b_str, STR_MAX - 1);
+        if (btn_a_str != NULL) strncpy(label_a_str, btn_a_str, STR_MAX - 1);
+        if (btn_b_str != NULL) strncpy(label_b_str, btn_b_str, STR_MAX - 1);
     }
 
     SDL_Rect btn_a_rect = {offsetX, 450};
@@ -37,7 +37,7 @@ void theme_renderStandardHint(SDL_Surface *screen, const char *btn_a_str, const 
         offsetX += label_open->w + 30;
     }
 
-    if (label_b_str) {
+    if (btn_b_str != NULL && strlen(label_b_str) > 0) {
         SDL_Surface *button_b = resource_getSurface(BUTTON_B);
         SDL_Rect btn_b_rect = {offsetX, 450 - button_b->h / 2};
         SDL_BlitSurface(button_b, NULL, screen, &btn_b_rect);
@@ -57,19 +57,22 @@ void theme_renderStandardHint(SDL_Surface *screen, const char *btn_a_str, const 
 
 void theme_renderFooter(SDL_Surface *screen)
 {
-    SDL_Rect footer_rect = {0, 420};
+    SDL_Rect footer_rect = {0, 420, 640, 60};
+    SDL_BlitSurface(theme_background(), &footer_rect, screen, &footer_rect);
 	SDL_BlitSurface(resource_getSurface(BG_FOOTER), NULL, screen, &footer_rect);
 }
 
-static int old_status_width = 200;
+static int old_status_width = -1;
 
 void theme_renderFooterStatus(SDL_Surface *screen, int current_num, int total_num)
 {
-    SDL_Rect status_pos = {620 - old_status_width, 420, old_status_width, 60};
-    SDL_Rect status_size = {status_pos.x, 0, old_status_width, 60};
+    if (old_status_width != -1) {
+        SDL_Rect status_pos = {620 - old_status_width, 420, old_status_width, 60};
+        SDL_Rect status_size = {status_pos.x, 0, old_status_width, 60};
 
-    SDL_BlitSurface(theme_background(), &status_pos, screen, &status_pos);
-    SDL_BlitSurface(resource_getSurface(BG_FOOTER), &status_size, screen, &status_pos);
+        SDL_BlitSurface(theme_background(), &status_pos, screen, &status_pos);
+        SDL_BlitSurface(resource_getSurface(BG_FOOTER), &status_size, screen, &status_pos);
+    }
 
     TTF_Font *font_hint = resource_getFont(HINT);
 

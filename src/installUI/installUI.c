@@ -43,13 +43,13 @@ int main(int argc, char *argv[])
     SDL_ShowCursor(SDL_DISABLE);
     TTF_Init();
 
-    SDL_Surface* video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE);
-    SDL_Surface* screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
+    SDL_Surface *video = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE);
+    SDL_Surface *screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 32, 0, 0, 0, 0);
     
-    SDL_Surface* waiting_bg = IMG_Load("res/waitingBG.png");
-    SDL_Surface* progress_stripes = IMG_Load("res/progress_stripes.png");
+    SDL_Surface *waiting_bg = IMG_Load("res/waitingBG.png");
+    SDL_Surface *progress_stripes = IMG_Load("res/progress_stripes.png");
 
-    TTF_Font* font = TTF_OpenFont("/customer/app/Exo-2-Bold-Italic.ttf", 36);
+    TTF_Font *font = TTF_OpenFont("/customer/app/Exo-2-Bold-Italic.ttf", 36);
     SDL_Color fg_color = {255, 255, 255, 0};
 
     Uint32 progress_bg = SDL_MapRGB(video->format, 29, 30, 37);
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
     int spinner_tick = 0;
 
     SDL_Event event;
-    int start = SDL_GetTicks();
 
     uint32_t acc_ticks = 0,
              last_ticks = SDL_GetTicks(),
@@ -146,6 +145,8 @@ int main(int argc, char *argv[])
 
             acc_ticks -= time_step;
         }
+
+        msleep(15);
     }
 
     if (exists(".installed") && exists(".waitConfirm")) {
@@ -153,7 +154,6 @@ int main(int argc, char *argv[])
 
         while (!quit) {
             while (SDL_PollEvent(&event)) {
-                SDLKey key = event.key.keysym.sym;
                 if (event.type == SDL_KEYUP)
                     quit = true;
             }
