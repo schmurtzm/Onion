@@ -1,8 +1,8 @@
 ###########################################################
 
 TARGET=Onion
-VERSION=4.0.0
-RA_SUBVERSION=0.1
+VERSION=4.0.0-beta
+RA_SUBVERSION=0.1.1
 
 ###########################################################
 
@@ -13,6 +13,7 @@ ROOT_DIR            := $(shell pwd -P)
 SRC_DIR             := $(ROOT_DIR)/src
 THIRD_PARTY_DIR     := $(ROOT_DIR)/third-party
 BUILD_DIR           := $(ROOT_DIR)/build
+BUILD_TEST_DIR      := $(ROOT_DIR)/build_test
 BIN_DIR             := $(ROOT_DIR)/build/.tmp_update/bin
 DIST_FULL           := $(ROOT_DIR)/dist/full
 DIST_CORE           := $(ROOT_DIR)/dist/core
@@ -23,9 +24,12 @@ STATIC_DIST         := $(ROOT_DIR)/static/dist
 STATIC_CONFIGS      := $(ROOT_DIR)/static/configs
 CACHE               := $(ROOT_DIR)/cache
 STATIC_PACKAGES     := $(ROOT_DIR)/static/packages
-PACKAGES_EMU_DEST   := $(BUILD_DIR)/App/The_Onion_Installer/data/Layer1
-PACKAGES_APP_DEST   := $(BUILD_DIR)/App/The_Onion_Installer/data/Layer2
-PACKAGES_RAPP_DEST  := $(BUILD_DIR)/App/The_Onion_Installer/data/Layer3
+PACKAGES_EMU_DEST   := $(BUILD_DIR)/Packages/Emu
+PACKAGES_APP_DEST   := $(BUILD_DIR)/Packages/App
+PACKAGES_RAPP_DEST  := $(BUILD_DIR)/Packages/RApp
+ifeq (,$(GTEST_INCLUDE_DIR))
+GTEST_INCLUDE_DIR = /usr/include/
+endif
 
 TOOLCHAIN := ghcr.io/onionui/miyoomini-toolchain:latest
 
@@ -33,7 +37,7 @@ include ./src/common/commands.mk
 
 ###########################################################
 
-.PHONY: all version core apps external release clean git-clean with-toolchain patch lib
+.PHONY: all version core apps external release clean git-clean with-toolchain patch lib test
 
 all: dist
 
@@ -89,25 +93,33 @@ core: $(CACHE)/.setup
 	@cd $(SRC_DIR)/packageManager && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/sendkeys && BUILD_DIR=$(BIN_DIR) make
 	@cd $(SRC_DIR)/setState && BUILD_DIR=$(BIN_DIR) make
+	@cd $(SRC_DIR)/infoPanel && BUILD_DIR=$(BIN_DIR) make
+	@cd $(SRC_DIR)/prompt && BUILD_DIR=$(BIN_DIR) make
+	@cd $(SRC_DIR)/batmon && BUILD_DIR=$(BIN_DIR) make
 # Build dependencies for installer
 	@mkdir -p $(DIST_FULL)/miyoo/app/.tmp_update/bin
-	@cd $(SRC_DIR)/installUI && BUILD_DIR=$(INSTALLER_DIR)/bin make
-	@cd $(SRC_DIR)/infoPanel && BUILD_DIR=$(INSTALLER_DIR)/bin make
-	@cd $(SRC_DIR)/prompt && BUILD_DIR=$(INSTALLER_DIR)/bin make
-	@cd $(SRC_DIR)/batmon && BUILD_DIR=$(INSTALLER_DIR)/bin make
+	@cd $(SRC_DIR)/installUI && BUILD_DIR=$(INSTALLER_DIR)/bin/ make
+	@cp $(BIN_DIR)/prompt $(INSTALLER_DIR)/bin/
+	@cp $(BIN_DIR)/batmon $(INSTALLER_DIR)/bin/
 
 apps: $(CACHE)/.setup
 	@$(ECHO) $(PRINT_RECIPE)
-	@cd $(SRC_DIR)/playActivityUI && BUILD_DIR=$(BUILD_DIR)/App/PlayActivity make
-	@find $(SRC_DIR)/playActivityUI -depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/App/PlayActivity/res/ \;
-	@find $(SRC_DIR)/packageManager -depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/App/The_Onion_Installer/res/ \;
-	@cd $(SRC_DIR)/clock && BUILD_DIR=$(PACKAGES_APP_DEST)/Set\ emulated\ time/App/Clock make
+	@cd $(SRC_DIR)/playActivityUI && BUILD_DIR="$(PACKAGES_APP_DEST)/Activity Tracker/App/PlayActivity" make
+	@find $(SRC_DIR)/playActivityUI -depth -type d -name res -exec cp -r {}/. "$(PACKAGES_APP_DEST)/Activity Tracker/App/PlayActivity/res/" \;
+	@find $(SRC_DIR)/packageManager -depth -type d -name res -exec cp -r {}/. $(BUILD_DIR)/App/PackageManager/res/ \;
+	@cd $(SRC_DIR)/clock && BUILD_DIR="$(PACKAGES_APP_DEST)/Clock (Set emulated time)/App/Clock" make
+# Preinstalled apps
+	@cp -a "$(PACKAGES_APP_DEST)/Activity Tracker/." $(BUILD_DIR)/
+	@cp -a "$(PACKAGES_APP_DEST)/Quick Guide/." $(BUILD_DIR)/
+	@cp -a "$(PACKAGES_APP_DEST)/RetroArch (Emulator settings)/." $(BUILD_DIR)/
+	@cp -a "$(PACKAGES_APP_DEST)/Tweaks/." $(BUILD_DIR)/
 
 external: $(CACHE)/.setup
 	@$(ECHO) $(PRINT_RECIPE)
 	@cd $(THIRD_PARTY_DIR)/RetroArch && make && cp retroarch $(BUILD_DIR)/RetroArch/
 	@echo $(RA_SUBVERSION) > $(BUILD_DIR)/RetroArch/onion_ra_version.txt
-	@cd $(THIRD_PARTY_DIR)/SearchFilter && make build && cp -a build/. "$(PACKAGES_APP_DEST)/Search game library/" && cp build/App/SearchFilter/tools $(BIN_DIR)
+	@cd $(THIRD_PARTY_DIR)/SearchFilter && make build && cp -a build/. "$(PACKAGES_APP_DEST)/Search/" && cp build/App/SearchFilter/tools $(BIN_DIR)
+	@cd $(THIRD_PARTY_DIR)/Terminal && make && cp ./st "$(PACKAGES_APP_DEST)/Terminal (Developer tool)/App/Terminal"
 
 dist: build
 	@$(ECHO) $(PRINT_RECIPE)
@@ -117,13 +129,13 @@ dist: build
 	@mkdir -p $(DIST_FULL)/RetroArch
 	@mv $(BUILD_DIR)/retroarch.pak $(DIST_FULL)/RetroArch/
 	@echo $(RA_SUBVERSION) > $(DIST_FULL)/RetroArch/ra_package_version.txt
-# Package core
-	@cd $(BUILD_DIR) && zip -rq $(DIST_FULL)/miyoo/app/.tmp_update/onion.pak .
 # Package configs
-	@mkdir -p $(ROOT_DIR)/temp/configs $(DIST_FULL)/miyoo/app/.tmp_update/config
+	@mkdir -p $(ROOT_DIR)/temp/configs $(BUILD_DIR)/.tmp_update/config
 	@rsync -a --exclude='.gitkeep' $(STATIC_CONFIGS)/ $(ROOT_DIR)/temp/configs
 	@cp -R $(ROOT_DIR)/temp/configs/Saves/CurrentProfile/ $(ROOT_DIR)/temp/configs/Saves/GuestProfile
-	@cd $(ROOT_DIR)/temp/configs && zip -rq $(DIST_FULL)/miyoo/app/.tmp_update/config/configs.pak .
+	@cd $(ROOT_DIR)/temp/configs && zip -rq $(BUILD_DIR)/.tmp_update/config/configs.pak .
+# Package core
+	@cd $(BUILD_DIR) && zip -rq $(DIST_FULL)/miyoo/app/.tmp_update/onion.pak .
 # Create core-only dist
 	@cp -R $(DIST_FULL)/.tmp_update $(DIST_CORE)/.tmp_update
 	@cp -R $(DIST_FULL)/miyoo $(DIST_CORE)/miyoo
@@ -138,7 +150,7 @@ release: dist
 
 clean:
 	@$(ECHO) $(PRINT_RECIPE)
-	@rm -rf $(BUILD_DIR) $(ROOT_DIR)/dist $(ROOT_DIR)/temp/configs
+	@rm -rf $(BUILD_DIR) $(BUILD_TEST_DIR) $(ROOT_DIR)/dist $(ROOT_DIR)/temp/configs
 	@rm -f $(CACHE)/.setup
 	@find include src -type f -name *.o -exec rm -f {} \;
 
@@ -168,3 +180,7 @@ patch:
 lib:
 	@cd $(ROOT_DIR)/include/cJSON && make clean && make
 	@cd $(ROOT_DIR)/include/SDL && make clean && make
+
+test:
+	@mkdir -p $(BUILD_TEST_DIR) && cd $(ROOT_DIR)/test && BUILD_DIR=$(BUILD_TEST_DIR)/ make
+	$(BUILD_TEST_DIR)/test

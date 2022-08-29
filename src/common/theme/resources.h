@@ -26,6 +26,7 @@ typedef enum theme_images
     BG_LIST_S,
     BG_LIST_L,
     HORIZONTAL_DIVIDER,
+    PROGRESS_DOT,
     TOGGLE_ON,
     TOGGLE_OFF,
     BG_FOOTER,
@@ -115,6 +116,7 @@ SDL_Surface* _loadImage(ThemeImages request)
         case BG_LIST_S: return theme_loadImage(t->path, "bg-list-s");
         case BG_LIST_L: return theme_loadImage(t->path, "bg-list-l");
         case HORIZONTAL_DIVIDER: return theme_loadImage(t->path, "div-line-h");
+        case PROGRESS_DOT: return theme_loadImage(t->path, "progress-dot");
         case TOGGLE_ON: return theme_loadImage(t->path, "extra/toggle-on");
         case TOGGLE_OFF: return theme_loadImage(t->path, "extra/toggle-off");
         case BG_FOOTER: return theme_loadImage(t->path, "tips-bar-bg");
@@ -137,7 +139,7 @@ SDL_Surface* _loadImage(ThemeImages request)
         case BRIGHTNESS_8: return theme_loadImage(t->path, "extra/lum8");
         case BRIGHTNESS_9: return theme_loadImage(t->path, "extra/lum9");
         case BRIGHTNESS_10: return theme_loadImage(t->path, "extra/lum10");
-        case LEGEND_GAMESWITCHER: return theme_loadImage(t->path, "extra/gameSwitcher-legend");
+        case LEGEND_GAMESWITCHER: return theme_loadImage(t->path, "extra/gs-legend");
         default: break;
     }
     return NULL;
